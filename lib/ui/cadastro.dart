@@ -30,11 +30,9 @@ class _CadastroScreenState extends State<CadastroScreen> {
   Future<void> pesquisarCep(String valor) async {
     final cep = valor.replaceAll(RegExp(r'\D'), '');
 
-    if (cep.length != 8 || cep == ultimoCepConsultado) {
+    if (cep.length != 8) {
       return;
     }
-
-    ultimoCepConsultado = cep;
 
     setState(() {
       buscandoCep = true;
@@ -47,28 +45,33 @@ class _CadastroScreenState extends State<CadastroScreen> {
     try {
       final dados = await viaCepService.buscarCep(cep);
 
-      if (mounted) {
-        setState(() {
-          ruaController.text = dados['logradouro'] ?? '';
-          bairroController.text = dados['bairro'] ?? '';
-          cidadeController.text = dados['localidade'] ?? '';
-          estadoController.text = dados['uf'] ?? '';
-        });
-      }
-    } catch (e) {
-      limparEndereco();
+      if (!mounted) return;
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              e.toString().contains('não encontrado')
-                  ? 'CEP não encontrado.'
-                  : 'Não foi possível consultar o CEP.',
-            ),
+      setState(() {
+        ruaController.text = dados['logradouro'] ?? '';
+        bairroController.text = dados['bairro'] ?? '';
+        cidadeController.text = dados['localidade'] ?? '';
+        estadoController.text = dados['uf'] ?? '';
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        ruaController.clear();
+        bairroController.clear();
+        cidadeController.clear();
+        estadoController.clear();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString().contains('não encontrado')
+                ? 'CEP não encontrado.'
+                : 'Não foi possível consultar o CEP.',
           ),
-        );
-      }
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
